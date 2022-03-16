@@ -50,7 +50,7 @@ async function processFiles(files,origin,currentDir,paths){
         await fs.writeFile(targetFile+'.sha1',hash)
         stats.processed++
         stats.total++
-        console.log(hash,'  done ', `  ${stat.size.toString().padStart(20,' ')}`,
+        console.log(hash,'     done', `  ${stat.size.toString().padStart(20,' ')}`,
           `   |   processed:  ${stats.processed.toString().padStart(10,' ')}  skipped:  ${stats.skipped.toString().padStart(10,' ')}  total:  ${stats.total.toString().padStart(10,' ')}`)
       }
     }
