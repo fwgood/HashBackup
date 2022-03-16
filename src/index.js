@@ -1,9 +1,9 @@
 const fs = require('fs/promises')
-const {constants} = require("fs")
+const { constants } = require("fs")
 const path = require('path')
 const uuid = require("uuid")
-const {getHash} = require("./utils/hash");
-const {archiveFile} = require("./utils/archive");
+const { getHash } = require("./utils/hash");
+const { archiveFile } = require("./utils/archive");
 
 require('dotenv').config()
 
@@ -17,13 +17,15 @@ require('dotenv').config()
 let stats = {
   processed: 0,
   skipped: 0,
+  failed: 0,
   total: 0
 }
 
 async function processFiles(files, origin, currentDir, paths) {
-  const {HashFiles} = paths
+  const { HashFiles,OriginFiles,id } = paths
   for (const file of files) {
     const originFile = path.resolve(origin, file)
+    let hash = "        "
     try {
       const stat = await fs.stat(originFile)
       if (stat.isDirectory()) {
@@ -32,7 +34,7 @@ async function processFiles(files, origin, currentDir, paths) {
         const subFiles = await fs.readdir(originFile)
         await processFiles(subFiles, originFile, targetDir, paths)
       } else if (stat.isFile()) {
-        const hash = await getHash('sha1', originFile)
+        hash = await getHash('sha1', originFile)
         const dest = path.resolve(
           HashFiles,
           hash.substr(0, 2),
@@ -43,20 +45,22 @@ async function processFiles(files, origin, currentDir, paths) {
           await fs.access(dest, constants.F_OK)
           stats.skipped++
           stats.total++
-          console.log(hash, '  skipped', `  ${stat.size.toString().padStart(20, ' ')}`,
-            `   |   processed:  ${stats.processed.toString().padStart(10, ' ')}  skipped:  ${stats.skipped.toString().padStart(10, ' ')}  total:  ${stats.total.toString().padStart(10, ' ')}`)
+
         } catch {
           await archiveFile(originFile, dest, process.env.COMPRESSION_LEVEL)
           const targetFile = path.resolve(currentDir, file)
           await fs.writeFile(targetFile + '.sha1', hash)
           stats.processed++
           stats.total++
-          console.log(hash, '     done', `  ${stat.size.toString().padStart(20, ' ')}`,
-            `   |   processed:  ${stats.processed.toString().padStart(10, ' ')}  skipped:  ${stats.skipped.toString().padStart(10, ' ')}  total:  ${stats.total.toString().padStart(10, ' ')}`)
         }
       }
     } catch (e) {
+      await fs.appendFile(path.resolve(OriginFiles,id+"-error.log"),originFile+"\n")
+      stats.failed++
     }
+    console.log(originFile.padEnd(120, ' '), hash.substring(0, 8),
+      `   |   processed:  ${stats.processed.toString().padStart(5, ' ')}  skipped:  ${stats.skipped.toString().padStart(5, ' ')}  total:  ${stats.total.toString().padStart(5, ' ')}  failed:   ${stats.failed.toString().padStart(5, ' ')}`)
+
   }
 }
 
@@ -90,11 +94,11 @@ async function prepare() {
 async function main(source) {
   // const source = process.env.SOURCE_PATH
   const id = uuid.v1()
-  const {OriginFiles, HashFiles} = await prepare()
+  const { OriginFiles, HashFiles } = await prepare()
   const current = path.resolve(OriginFiles, id)
   await fs.mkdir(current)
   const files = await fs.readdir(source)
-  await processFiles(files, source, current, {OriginFiles, HashFiles})
+  await processFiles(files, source, current, { OriginFiles, HashFiles,id })
 }
 
 main(process.argv[2]).then(() => {
