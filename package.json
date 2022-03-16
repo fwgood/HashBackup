@@ -1,0 +1,24 @@
+{
+  "name": "hashbackup",
+  "version": "0.0.1",
+  "description": "1. 随机UUID，建立文件夹\r 2. 输入盘符\r 3. 遍历盘符\r 4. 递归遍历，复制文件夹\r 5. 计算文件hash，在文件夹中生成 [filename].sha1文件，内容为sha1值\r 6. 复制文件至hash文件中，文件名为[sha1]，并建立[sha1].desc文件名，内容为文件的元数据",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fwgood/HashBackup.git"
+  },
+  "author": "",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/fwgood/HashBackup/issues"
+  },
+  "homepage": "https://github.com/fwgood/HashBackup#readme",
+  "dependencies": {
+    "archiver": "^5.3.0",
+    "dotenv": "^16.0.0",
+    "uuid": "^8.3.2"
+  }
+}
